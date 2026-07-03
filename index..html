@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H.F. Gray Development — Web Developer & Mapmaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f4;
+  --paper-deep:#e2ebed;
+  --ink:#12293b;
+  --ink-soft:#3d5568;
+  --bathy:#7ba8b5;
+  --bathy-light:#adc9d2;
+  --flag:#c4392f;
+  --hairline:#c3d3d8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;} *{animation:none!important;transition:none!important;}}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Archivo',sans-serif;
+  font-size:17px;
+  line-height:1.65;
+}
+
+/* ── CHART FRAME ─────────────────────────────── */
+.chart-frame{
+  max-width:1060px;
+  margin:28px auto;
+  border:2px solid var(--ink);
+  position:relative;
+  background:
+    radial-gradient(ellipse 900px 500px at 85% -5%, rgba(123,168,181,0.13), transparent 60%),
+    var(--paper);
+}
+/* lat/long tick marks on the frame */
+.chart-frame::before, .chart-frame::after{
+  content:'';
+  position:absolute;
+  pointer-events:none;
+}
+.chart-frame::before{ /* top + bottom ticks */
+  left:0;right:0;top:0;bottom:0;
+  background-image:
+    repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 60px);
+  background-size:100% 8px,100% 8px;
+  background-position:top left, bottom left;
+  background-repeat:no-repeat;
+}
+.chart-frame::after{ /* left + right ticks */
+  left:0;right:0;top:0;bottom:0;
+  background-image:
+    repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 60px);
+  background-size:8px 100%,8px 100%;
+  background-position:top left, top right;
+  background-repeat:no-repeat;
+}
+.inner{padding:0 56px;}
+
+/* ── TITLE BLOCK (hero) ──────────────────────── */
+.title-block{
+  padding:72px 56px 56px;
+  border-bottom:1px solid var(--ink);
+  position:relative;
+  overflow:hidden;
+}
+/* bathymetric contours */
+.contours{
+  position:absolute;
+  right:-140px; top:-160px;
+  width:620px;height:620px;
+  opacity:0.55;
+  pointer-events:none;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:26px;
+}
+.eyebrow .rule{height:1px;width:44px;background:var(--flag);}
+h1{
+  font-family:'Spectral',serif;
+  font-weight:500;
+  font-size:clamp(2.4rem, 5.4vw, 4.1rem);
+  line-height:1.06;
+  letter-spacing:-0.01em;
+  max-width:13ch;
+  position:relative;
+}
+h1 em{
+  font-style:italic;
+  font-weight:400;
+  color:var(--flag);
+}
+.title-sub{
+  margin-top:26px;
+  max-width:54ch;
+  font-size:18px;
+  color:var(--ink-soft);
+  position:relative;
+}
+.coords{
+  margin-top:40px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  letter-spacing:0.1em;
+  color:var(--ink-soft);
+  display:flex;
+  gap:34px;
+  flex-wrap:wrap;
+  position:relative;
+}
+.coords span b{color:var(--ink);font-weight:600;}
+.cta-row{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap;position:relative;}
+.btn{
+  display:inline-block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  text-decoration:none;
+  padding:13px 26px;
+  border:1.5px solid var(--ink);
+  color:var(--ink);
+  transition:background 0.15s,color 0.15s;
+}
+.btn:hover{background:var(--ink);color:var(--paper);}
+.btn:focus-visible{outline:3px solid var(--flag);outline-offset:2px;}
+.btn-primary{background:var(--ink);color:var(--paper);}
+.btn-primary:hover{background:var(--flag);border-color:var(--flag);}
+
+/* ── SECTION HEADERS ─────────────────────────── */
+section{padding:64px 0;border-bottom:1px solid var(--hairline);}
+section:last-of-type{border-bottom:none;}
+.sec-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--flag);
+  margin-bottom:14px;
+}
+h2{
+  font-family:'Spectral',serif;
+  font-weight:500;
+  font-size:clamp(1.6rem, 3vw, 2.1rem);
+  line-height:1.2;
+  margin-bottom:18px;
+  max-width:24ch;
+}
+.lede{max-width:58ch;color:var(--ink-soft);}
+
+/* ── SERVICES ────────────────────────────────── */
+.svc-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1px;
+  background:var(--hairline);
+  border:1px solid var(--hairline);
+  margin-top:40px;
+}
+.svc{
+  background:var(--paper);
+  padding:30px 26px 34px;
+}
+.svc h3{
+  font-family:'Spectral',serif;
+  font-weight:600;
+  font-size:1.15rem;
+  margin-bottom:10px;
+}
+.svc p{font-size:15.5px;color:var(--ink-soft);}
+.svc .mark{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:0.14em;
+  color:var(--bathy);
+  display:block;
+  margin-bottom:16px;
+}
+
+/* ── PROJECTS (chart stations) ───────────────── */
+.station{
+  display:grid;
+  grid-template-columns:56px 1fr;
+  gap:26px;
+  padding:38px 0;
+  border-bottom:1px dashed var(--hairline);
+}
+.station:last-child{border-bottom:none;}
+.station-marker{
+  width:44px;height:44px;
+  border:1.5px solid var(--ink);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  flex-shrink:0;
+}
+.station-marker::after{
+  content:'';
+  width:8px;height:8px;border-radius:50%;
+  background:var(--flag);
+}
+.station h3{
+  font-family:'Spectral',serif;
+  font-weight:600;
+  font-size:1.35rem;
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.station h3 .tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--paper);
+  background:var(--bathy);
+  padding:3px 9px;
+}
+.station h3 .tag.live{background:var(--flag);}
+.station p{margin-top:10px;max-width:62ch;color:var(--ink-soft);font-size:16px;}
+.station .stack{
+  margin-top:12px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:0.06em;
+  color:var(--bathy);
+}
+.station a{color:var(--flag);text-decoration:none;border-bottom:1px solid currentColor;}
+.station a:hover{color:var(--ink);}
+.station a:focus-visible{outline:3px solid var(--flag);outline-offset:2px;}
+
+/* ── ABOUT ───────────────────────────────────── */
+.about-grid{
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:56px;
+  align-items:start;
+}
+.cred-list{
+  border:1px solid var(--hairline);
+  padding:26px 26px 10px;
+  background:var(--paper-deep);
+}
+.cred-list h4{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:16px;
+}
+.cred-list ul{list-style:none;}
+.cred-list li{
+  font-size:15px;
+  padding:9px 0 9px 22px;
+  border-bottom:1px dashed var(--hairline);
+  position:relative;
+}
+.cred-list li:last-child{border-bottom:none;}
+.cred-list li::before{
+  content:'';
+  position:absolute;left:0;top:16px;
+  width:9px;height:9px;
+  border:1.5px solid var(--flag);
+  border-radius:50%;
+}
+
+/* ── CONTACT ─────────────────────────────────── */
+.contact{
+  text-align:left;
+  padding:64px 0 76px;
+}
+.contact .big{
+  font-family:'Spectral',serif;
+  font-weight:500;
+  font-size:clamp(1.7rem, 3.4vw, 2.4rem);
+  max-width:22ch;
+  margin-bottom:26px;
+}
+.contact .big em{font-style:italic;color:var(--flag);}
+.contact-lines{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:14.5px;
+  line-height:2.3;
+  color:var(--ink-soft);
+}
+.contact-lines b{color:var(--ink);font-weight:600;}
+
+/* ── FOOTER STRIP ────────────────────────────── */
+.chart-foot{
+  border-top:2px solid var(--ink);
+  padding:18px 56px;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+
+@media (max-width:760px){
+  .inner{padding:0 26px;}
+  .title-block{padding:56px 26px 44px;}
+  .chart-foot{padding:16px 26px;}
+  .about-grid{grid-template-columns:1fr;gap:34px;}
+  .station{grid-template-columns:44px 1fr;gap:16px;}
+  .contours{right:-260px;top:-220px;opacity:0.35;}
+}
+</style>
+</head>
+<body>
+
+<div class="chart-frame">
+
+  <!-- TITLE BLOCK -->
+  <header class="title-block">
+    <svg class="contours" viewBox="0 0 600 600" aria-hidden="true">
+      <g fill="none" stroke="#7ba8b5" stroke-width="1">
+        <path d="M300,80 C420,90 500,180 505,300 C510,430 410,520 290,515 C170,510 90,420 95,295 C100,180 190,72 300,80 Z"/>
+        <path d="M300,120 C395,128 460,195 465,297 C470,405 390,480 292,476 C195,472 130,398 134,296 C138,200 210,113 300,120 Z"/>
+        <path d="M298,160 C372,166 422,215 426,296 C430,382 366,440 290,437 C216,434 168,378 172,297 C176,222 228,154 298,160 Z"/>
+        <path d="M296,200 C350,205 385,238 388,296 C391,358 344,400 290,398 C238,396 204,356 207,297 C210,244 245,196 296,200 Z"/>
+        <path d="M294,240 C328,244 348,262 350,296 C352,333 322,360 289,358 C258,356 238,332 240,297 C242,265 262,237 294,240 Z" stroke-width="1.4"/>
+      </g>
+      <g font-family="IBM Plex Mono" font-size="10" fill="#7ba8b5">
+        <text x="452" y="300">-10</text>
+        <text x="410" y="300">-20</text>
+        <text x="372" y="300">-40</text>
+        <text x="336" y="300">-60</text>
+      </g>
+    </svg>
+
+    <p class="eyebrow"><span class="rule"></span>H.F. Gray Development · Est. Chart № 001</p>
+    <h1>Websites and interactive maps, <em>built by hand.</em></h1>
+    <p class="title-sub">I'm Hunter Gray — a web developer and mapmaker. I build clean, fast websites for small businesses, and interactive maps that turn places into products.</p>
+
+    <div class="coords">
+      <span>LAT <b>18.31° N</b></span>
+      <span>LON <b>65.30° W</b></span>
+      <span>DATUM <b>SAN JUAN · CULEBRA · STATESIDE</b></span>
+      <span>LANG <b>EN / ES</b></span>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#contact">Start a project</a>
+      <a class="btn" href="#work">See the work</a>
+    </div>
+  </header>
+
+  <div class="inner">
+
+    <!-- SERVICES -->
+    <section id="services">
+      <p class="sec-label">Services</p>
+      <h2>Three things, done properly.</h2>
+      <p class="lede">No agencies, no handoffs, no templates stretched to fit. You work with the person who builds it.</p>
+
+      <div class="svc-grid">
+        <div class="svc">
+          <span class="mark">SVC / SITES</span>
+          <h3>Small business websites</h3>
+          <p>Fast, mobile-first sites for restaurants, charters, shops, and services. Built to load quick, look sharp, and get customers to call, book, or show up.</p>
+        </div>
+        <div class="svc">
+          <span class="mark">SVC / MAPS</span>
+          <h3>Interactive maps</h3>
+          <p>Custom web maps — walking tours, trail guides, property maps, route stories. Satellite imagery, animated routes, and layers your visitors can actually use.</p>
+        </div>
+        <div class="svc">
+          <span class="mark">SVC / TOOLS</span>
+          <h3>Custom web tools</h3>
+          <p>Booking flows, dashboards, AI-assisted features, and the odd thing that doesn't fit a category. If it runs in a browser, it can be built.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORK -->
+    <section id="work">
+      <p class="sec-label">Charted Work</p>
+      <h2>Selected projects.</h2>
+
+      <div class="station">
+        <div class="station-marker" aria-hidden="true"></div>
+        <div>
+          <h3>Culebra Maps <span class="tag live">Live product</span></h3>
+          <p>An interactive mapping and travel-guide product for Culebra, Puerto Rico — built from years of on-island knowledge, sold through an active storefront. Design, cartography, build, and distribution, end to end.</p>
+          <p class="stack">CARTOGRAPHY · INTERACTIVE WEB MAP · GUMROAD STOREFRONT</p>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="station-marker" aria-hidden="true"></div>
+        <div>
+          <h3>Jack Kadis Walking Map <span class="tag">Client work</span></h3>
+          <p>A commissioned interactive walking map with satellite imagery, an animated route with a flight segment, and a hidden check-in easter egg. A story told as a map.</p>
+          <p class="stack">LEAFLET.JS · ESRI SATELLITE TILES · CUSTOM ANIMATION</p>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="station-marker" aria-hidden="true"></div>
+        <div>
+          <h3>Jarvis <span class="tag">Build</span></h3>
+          <p>A browser-based voice assistant powered by the Claude API — wake word, natural interruption, and live web search, running entirely in the browser.</p>
+          <p class="stack">CLAUDE API · WEB SPEECH · GITHUB PAGES</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="about-grid">
+        <div>
+          <p class="sec-label">The Operator</p>
+          <h2>Service industry standards, applied to the web.</h2>
+          <p class="lede">Before I built websites, I ran barbecue pits at some of the most demanding programs in Texas and Tennessee. That work teaches you things templates can't: show up early, respect the craft, sweat the details nobody sees, and never serve something you wouldn't stand behind.</p>
+          <p class="lede" style="margin-top:16px;">I bring that to every build. Clear communication, honest timelines, and work that holds up.</p>
+        </div>
+        <div class="cred-list">
+          <h4>Field Notes</h4>
+          <ul>
+            <li>Fluent English &amp; Spanish</li>
+            <li>FAA Part 107 licensed drone pilot — aerial imagery available</li>
+            <li>Restaurant &amp; hospitality background — I speak the industry's language</li>
+            <li>Deep Puerto Rico &amp; Caribbean local knowledge</li>
+            <li>One point of contact, start to finish</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+      <p class="sec-label">Get In Touch</p>
+      <p class="big">Have a business that needs a better website — or a place that deserves a <em>proper map?</em></p>
+      <div class="contact-lines">
+        <div>EMAIL — <b>huntergray99@gmail.com</b></div>
+        <div>BASED — <b>San Juan, PR</b></div>
+        <div>RESPONSE — <b>within one business day</b></div>
+      </div>
+      <div class="cta-row" style="margin-top:30px;">
+        <a class="btn btn-primary" href="mailto:youremail@example.com">Send an email</a>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="chart-foot">
+    <span>H.F. Gray Development</span>
+    <span>Surveyed &amp; drawn by hand</span>
+    <span>© 2026</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
